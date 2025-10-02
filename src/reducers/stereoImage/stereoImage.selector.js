@@ -1,0 +1,1 @@
+export const stereoImageSelector = (state) => state.stereos.stereoImage;

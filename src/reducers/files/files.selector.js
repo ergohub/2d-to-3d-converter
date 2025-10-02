@@ -1,0 +1,1 @@
+export const fileSelector = (state) => state.files.fileUrl;

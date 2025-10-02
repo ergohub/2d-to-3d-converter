@@ -1,0 +1,1 @@
+export const videoFrameSelector = (state) => state.video.frames;

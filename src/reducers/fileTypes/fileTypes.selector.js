@@ -1,0 +1,1 @@
+export const fileTypeSelector = (state) => state.types.fileType;
