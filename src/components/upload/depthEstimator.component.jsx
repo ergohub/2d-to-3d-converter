@@ -2,7 +2,7 @@
 import { useDispatch, useSelector } from "react-redux";
 
 // Utils
-import { modelPrediction } from "../../utils/prediction.uitls";
+import { modelPrediction } from "../../utils/prediction.utils";
 // import { dataUrlToImageData } from "../../utils/dataUrlToImageData.utils";
 import { framesToVideo } from "../../utils/framesToVideo.utils";
 // import { videoToFrames } from "../../utils/videoToFrames";
@@ -125,7 +125,6 @@ const DepthEstimator = () => {
             <button onClick={processMedia}>Process Stereo Image</button><br />
             {/* <div>Processing: {videoFrames.length} frames remaining</div> */}
             <div>Processed: {frameCount.length} / {totalNoFrames} frames</div>
-            {console.log(totalNoFrames)}
 
             {/* {SBSImage && <img src={SBSImage} width="60%" alt="Stereo Image" />} */}
             {frameCount.length === totalNoFrames && (

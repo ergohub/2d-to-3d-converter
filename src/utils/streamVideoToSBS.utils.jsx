@@ -49,7 +49,6 @@ export const StreamVideoToSBS = async (file, fps, dispatch) => {
     });
 
     const totalFrames = Math.ceil(metadata.duration * fps);
-    console.log(totalFrames);
 
     dispatch(setFrametotal(totalFrames));
 

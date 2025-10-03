@@ -1,5 +1,5 @@
 import { dataUrlToImageData } from "./dataUrlToImageData.utils";
-import { modelPrediction } from "./prediction.uitls";
+import { modelPrediction } from "./prediction.utils";
 import { DepthImageProcessor } from "./depthImageProcessor.utils";
 import { SBSImageProcessor } from "./SBSImageProcessor";
 
