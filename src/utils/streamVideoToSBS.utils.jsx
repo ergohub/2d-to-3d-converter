@@ -4,7 +4,11 @@ import { FFmpeg } from "@ffmpeg/ffmpeg";
 // import { fetchFile } from "@ffmpeg/util";
 import { fetchFile } from "@ffmpeg/util";
 import { SBSpipeline } from "./sbsPipeline";
-import { setStereoImage } from "../reducers/stereoImage/stereoImage.reducer";
+import { setFrameCount, setFrametotal } from "../reducers/stereoImage/stereoImage.reducer";
+
+import { UploadFrame } from "./UploadFrame.utils"
+// Frame uploader
+
 
 // Helper: convert Blob → base64
 const blobToBase64 = (blob) =>
@@ -45,6 +49,9 @@ export const StreamVideoToSBS = async (file, fps, dispatch) => {
     });
 
     const totalFrames = Math.ceil(metadata.duration * fps);
+    console.log(totalFrames);
+
+    dispatch(setFrametotal(totalFrames));
 
     for (let i = 0; i < totalFrames; i++) {
         const frameName = `frame${String(i).padStart(4, "0")}.png`;
@@ -66,7 +73,10 @@ export const StreamVideoToSBS = async (file, fps, dispatch) => {
         const sbs = await SBSpipeline(frameBase64);
 
         // Push result directly to Redux
-        dispatch(setStereoImage(sbs));
+
+        await UploadFrame(sbs, i)
+        dispatch(setFrameCount(i));
+
 
         // Free memory (delete frame from FFmpeg FS)
         ffmpeg.deleteFile(frameName); // NEW API

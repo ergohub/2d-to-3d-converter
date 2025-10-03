@@ -16,20 +16,21 @@ import { StreamVideoToSBS } from "../../utils/streamVideoToSBS.utils";
 import { setFileUrl } from "../../reducers/files/files.reducer";
 import { setFileType } from "../../reducers/fileTypes/fileTypes.reducer";
 // import { setVideoFrames } from "../../reducers/videoFrames/videoFrame.reducer";
-import { setStereoImage, clearStereoImages } from "../../reducers/stereoImage/stereoImage.reducer";
+import { setStereoImage } from "../../reducers/stereoImage/stereoImage.reducer";
 
 // Selectors
 import { fileSelector } from "../../reducers/files/files.selector";
 import { fileTypeSelector } from "../../reducers/fileTypes/fileTypes.selector";
 import { videoFrameSelector } from "../../reducers/videoFrames/videoFrame.selector";
-import { stereoImageSelector } from "../../reducers/stereoImage/stereoImage.selector";
+import { stereoImageSelector, frameCountSelector, frameTotalSelector } from "../../reducers/stereoImage/stereoImage.selector";
 
 const DepthEstimator = () => {
     const dispatch = useDispatch()
 
     const fileUrl = useSelector(fileSelector);
     const SBSImage = useSelector(stereoImageSelector);
-    const frameStore = useSelector(videoFrameSelector)
+    const frameCount = useSelector(frameCountSelector);
+    const totalNoFrames = useSelector(frameTotalSelector)
     const fileType = useSelector(fileTypeSelector);
 
     // useEffect(() => {
@@ -49,17 +50,21 @@ const DepthEstimator = () => {
     }
 
     const exportVideo = async () => {
-        if (!SBSImage || SBSImage.length === 0) {
-            alert("No frames to export!");
-            return;
-        }
+        // if (!SBSImage || SBSImage.length === 0) {
+        //     alert("No frames to export!");
+        //     return;
+        // }
 
-        const videoUrl = await framesToVideo(SBSImage);
+        // const videoUrl = await framesToVideo(SBSImage);
+        const response = await fetch("http://localhost:4000/build-video");
+        const blob = await response.blob();
+        const videoURL = URL.createObjectURL(blob)
+
         const a = document.createElement("a");
-        a.href = videoUrl;
+        a.href = videoURL;
         a.download = "stereo-video.mp4";
         a.click();
-        dispatch(clearStereoImages());
+
     };
 
     const exportImage = async () => {
@@ -119,10 +124,11 @@ const DepthEstimator = () => {
             <input type='file' onChange={handleUpload} />
             <button onClick={processMedia}>Process Stereo Image</button><br />
             {/* <div>Processing: {videoFrames.length} frames remaining</div> */}
-            <div>Processed: {SBSImage.length} / {frameStore.length} frames</div>
+            <div>Processed: {frameCount.length} / {totalNoFrames} frames</div>
+            {console.log(totalNoFrames)}
 
             {/* {SBSImage && <img src={SBSImage} width="60%" alt="Stereo Image" />} */}
-            {SBSImage.length > 0 && (
+            {frameCount.length === totalNoFrames && (
                 <button onClick={exportVideo}>Download Stereo Video</button>
             )}
 
