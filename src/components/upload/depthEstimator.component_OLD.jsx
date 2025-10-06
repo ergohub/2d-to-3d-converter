@@ -23,7 +23,6 @@ import { fileSelector } from "../../reducers/files/files.selector";
 import { fileTypeSelector } from "../../reducers/fileTypes/fileTypes.selector";
 import { videoFrameSelector } from "../../reducers/videoFrames/videoFrame.selector";
 import { stereoImageSelector, frameCountSelector, frameTotalSelector } from "../../reducers/stereoImage/stereoImage.selector";
-import { uploadVideo } from "../../utils/uploadVideo.utils";
 
 const DepthEstimator = () => {
     const dispatch = useDispatch()
@@ -110,7 +109,9 @@ const DepthEstimator = () => {
 
 
         } else if (fileType.startsWith("video/")) {
-            uploadVideo(fileUrl);
+            await StreamVideoToSBS(fileUrl, 24, dispatch);
+            // dispatch(setVideoFrames(videoFrames));
+            // await handleVideoFrames(videoFrames);
         }
 
 
@@ -121,7 +122,7 @@ const DepthEstimator = () => {
     return (
         <div>
             <input type='file' onChange={handleUpload} />
-            <button onClick={processMedia}>Process Video</button><br />
+            <button onClick={processMedia}>Process Stereo Image</button><br />
             {/* <div>Processing: {videoFrames.length} frames remaining</div> */}
             <div>Processed: {frameCount.length} / {totalNoFrames} frames</div>
 
