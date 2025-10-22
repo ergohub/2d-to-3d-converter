@@ -1,4 +1,4 @@
-// import { useEffect } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 // Utils
@@ -17,13 +17,14 @@ import { setFileUrl } from "../../reducers/files/files.reducer";
 import { setFileType } from "../../reducers/fileTypes/fileTypes.reducer";
 // import { setVideoFrames } from "../../reducers/videoFrames/videoFrame.reducer";
 import { setStereoImage } from "../../reducers/stereoImage/stereoImage.reducer";
+import { setProgress } from "../../reducers/progress/progress.reducer";
 
 // Selectors
 import { fileSelector } from "../../reducers/files/files.selector";
 import { fileTypeSelector } from "../../reducers/fileTypes/fileTypes.selector";
-import { videoFrameSelector } from "../../reducers/videoFrames/videoFrame.selector";
 import { stereoImageSelector, frameCountSelector, frameTotalSelector } from "../../reducers/stereoImage/stereoImage.selector";
 import { uploadVideo } from "../../utils/uploadVideo.utils";
+import { progressSelector } from "../../reducers/progress/progress.selector";
 
 const DepthEstimator = () => {
     const dispatch = useDispatch()
@@ -33,13 +34,7 @@ const DepthEstimator = () => {
     const frameCount = useSelector(frameCountSelector);
     const totalNoFrames = useSelector(frameTotalSelector)
     const fileType = useSelector(fileTypeSelector);
-
-    // useEffect(() => {
-    //     if (SBSImage && SBSImage.length > 0) {
-    //         exportImage();
-    //     }
-    // }, [SBSImage]);
-
+    const progress = useSelector(progressSelector);
 
     const handleUpload = async (e) => {
         const file = e.target.files[0];
@@ -48,50 +43,31 @@ const DepthEstimator = () => {
             dispatch(setFileType(file.type))
             // console.log(file.type);
         }
+
     }
-
-    const exportVideo = async () => {
-        // if (!SBSImage || SBSImage.length === 0) {
-        //     alert("No frames to export!");
-        //     return;
-        // }
-
-        // const videoUrl = await framesToVideo(SBSImage);
-        const response = await fetch("http://localhost:4000/build-video");
-        const blob = await response.blob();
-        const videoURL = URL.createObjectURL(blob)
-
-        const a = document.createElement("a");
-        a.href = videoURL;
-        a.download = "stereo-video.mp4";
-        a.click();
-
-    };
-
-    const exportImage = async () => {
-        const imageData = await SBSImage;
-
-        if (!imageData || imageData.length === 0) {
-            console.error("No image data available yet!");
-            return;
-        }
-
-        const res = await fetch(imageData);
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-
-        const imageToDownload = document.createElement('a');
-        imageToDownload.download = "SBS-image.png";
-        imageToDownload.href = url;
-        document.body.appendChild(imageToDownload);
-        imageToDownload.click();
-        document.body.removeChild(imageToDownload);
-
-        URL.revokeObjectURL(url);
-    };
-
-
-
+    /*
+        const checkProgress = ((progressURL) => {
+    
+            useEffect(() => {
+                // const currentJob = jobNumber;
+    
+                const eventSource = new EventSource({ progressURL });
+                console.log(eventSource);
+    
+                eventSource.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    // dispatch(setProgressURL(data.percent));
+                    console.log(data);
+    
+                    if (data.status === "done") {
+                        eventSource.close();
+                    }
+                }
+    
+            }, [progressURL])
+    
+        })
+    */
     const processMedia = async () => {
         if (!fileUrl || !fileType) {
             alert("Please upload a file first!");
@@ -110,11 +86,27 @@ const DepthEstimator = () => {
 
 
         } else if (fileType.startsWith("video/")) {
-            uploadVideo(fileUrl);
+            const jobID = await uploadVideo(fileUrl);
+            console.log("Job number from upload:", jobID);
+
+            const eventSource = new EventSource(`http://localhost:4000/progress/${jobID}`);
+            eventSource.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                dispatch(setProgress(data));
+                // console.log("Got message:", data);
+            };
         }
+        /*
+        const eventSource = new EventSource(`http://localhost:4000/progress/${jobID}`);
+        console.log(eventSource.onmessage);
+                    eventSource.onmessage = (e) => {
+                        const data = JSON.parse(e)
+                        console.log(data);
+                    }
+                    */
 
+    }
 
-    };
 
 
 
@@ -122,14 +114,7 @@ const DepthEstimator = () => {
         <div>
             <input type='file' onChange={handleUpload} />
             <button onClick={processMedia}>Process Video</button><br />
-            {/* <div>Processing: {videoFrames.length} frames remaining</div> */}
-            <div>Processed: {frameCount.length} / {totalNoFrames} frames</div>
-
-            {/* {SBSImage && <img src={SBSImage} width="60%" alt="Stereo Image" />} */}
-            {frameCount.length === totalNoFrames && (
-                <button onClick={exportVideo}>Download Stereo Video</button>
-            )}
-
+            {progress && <div>Processed: {Math.round(progress.percent)} %</div>}
         </div>
     );
 };

@@ -1,0 +1,1 @@
+export const progressSelector = (state) => state.progress.progress;

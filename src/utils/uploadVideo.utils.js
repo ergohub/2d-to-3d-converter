@@ -1,4 +1,5 @@
 export const uploadVideo = async (file) => {
+
     const formData = new FormData();
     formData.append("video", file); // “video” must match the multer field name
 
@@ -11,6 +12,6 @@ export const uploadVideo = async (file) => {
         throw new Error("Upload failed");
     }
 
-    const data = await response.json();
-    console.log("Upload success:", data);
+    const { jobId } = await response.json();
+    return jobId;
 }
