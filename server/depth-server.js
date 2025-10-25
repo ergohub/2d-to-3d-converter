@@ -2,12 +2,14 @@ import express from "express";
 import multer from "multer";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
 import { SBSpipeline } from "./utils/sbsPipeline.js";
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path)
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 const app = express();
 app.use(cors());
@@ -19,6 +21,23 @@ const OUTPUT_DIR = "output";
 const AUDIO_DIR = "audio";
 
 let jobProgress = {};
+
+// FPS Helper function
+const getFPS = (filePath) => {
+    return new Promise((resolve, reject) => {
+        ffmpeg.ffprobe(filePath, (err, data) => {
+            if (err) return reject(err);
+            const stream = data.streams.find(s => s.codec_type === "video");
+            if (!stream) return reject("No vide stream fouund");
+
+            const rate = stream.avg_frame_rate || stream.r_frame_rate;
+            const [num, den] = rate.split("/").map(Number);
+            const fps = den ? num / den : num;
+            resolve(fps);
+        })
+    })
+}
+
 //Progress endpoint
 app.get("/progress/:jobId", (req, res) => {
     const { jobId } = req.params;
@@ -39,6 +58,10 @@ app.get("/progress/:jobId", (req, res) => {
 // Upload endpoint
 app.post("/upload-video", upload.single("video"), async (req, res) => {
     const inputPath = req.file.path;
+    /*
+        getFPS(inputPath) // Get Frames per Second
+            .then(fps => console.log("FPS:", fps))
+    */
     const jobId = Date.now().toString();
     jobProgress[jobId] = {
         id: jobId,
@@ -96,9 +119,11 @@ app.post("/upload-video", upload.single("video"), async (req, res) => {
 
     // Rebuild video
     const outputPath = path.join(OUTPUT_DIR, `${jobId}.mp4`);
+    const fps = await getFPS(inputPath);
+    console.log(fps);
     await new Promise((resolve, reject) => {
         ffmpeg(`${outputDir}/frame_%04d.png`)
-            .inputFPS(30)
+            .inputFPS(fps)
             .input(`${AUDIO_DIR}/${jobId}.aac`) // 👈 bring back the audio
             .outputOptions([
                 "-c:v libx264",
